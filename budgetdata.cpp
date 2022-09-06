@@ -3,35 +3,84 @@
 BudgetData::BudgetData(QWidget *parent)
 {
     QString userName {findHomeFolder()};
-    dbPath = dbPath + "/" + userName + "BudgetDB";
+    dbPath = dbPath + "/" + userName + "/BudgetDB";
+    if (DEBUG) {
+        qDebug() << "Set DB Path to: " << dbPath;
+    }
     // Check if BudgetDB folder exists
     if (!QDir(dbPath).exists()) {
         // Create Folder
         QDir().mkdir(dbPath);
+        if (DEBUG) {
+            qDebug() << "Path did not exist! Creating folder now";
+        }
     }
     dbPath = dbPath + "/" + dbBaseName;
+    if (DEBUG) {
+        qDebug() << "Set DB ABS Path to: " << dbPath;
+    }
+    db.setDatabaseName(dbPath);
     // Check if DB Exists
     if (!fileExists(dbPath)) {
         // Create the DB File
         QFile newFile(dbPath);
         newFile.open( QIODevice::WriteOnly);
         newFile.close();
+        if (DEBUG) {
+            qDebug() << "DB File did not exist! Creating file now";
+        }
         initTables();
     }
-    // TODO: Check if tables exist
-    if (false) {
-        // TODO: Clear the file
+    // Check if tables exist
+    else if (!dbTablesExist()) {
+        if (DEBUG) {
+            qDebug() << "DB File did not contain all neccessary tables, erasing contents and reinitializing db.";
+        }
+        // Clear the file
+        eraseDBFile();
+        // Write Tables
         initTables();
     }
-    else {
-        // Set DB Name
-        db.setDatabaseName(dbPath);
+}
+
+
+void BudgetData::eraseDBFile() {
+    //QFile dbFile(dbPath);
+    //dbFile.resize(0);
+    std::ofstream ofs;
+    ofs.open(dbPath.toStdString(), std::ofstream::out | std::ofstream::trunc);
+    ofs.close();
+}
+
+
+bool BudgetData::dbTablesExist() {
+    bool tablesExist {true};
+    const QStringList tables {"TOTALS", "CC", "BILLS"};
+    try {
+        db.open();
+        for (const auto& t : tables) {
+            QSqlQuery q;
+            const QString tempQuery {"SELECT name FROM sqlite_master WHERE type='table' AND name='" + t + "';"};
+            q.exec(tempQuery);
+            if (!q.next()) {
+                if (DEBUG) {
+                    qDebug() << t << " table did not exist in DB!";
+                }
+                tablesExist = false;
+            }
+        }
     }
+    catch (std::exception e) {
+        qDebug() << "ERROR while checking if tables exist: " << e.what();
+        return false;
+        db.close();
+    }
+    db.close();
+    return tablesExist;
 }
 
 void BudgetData::initTables() {
     qDebug() << "Creating DB Tables";
-    db.setDatabaseName(dbPath);
     db.open();
     QSqlQuery query;
     // Create TOTALS Table
@@ -61,7 +110,6 @@ void BudgetData::initTables() {
 QString BudgetData::findHomeFolder() {
     QStringList homePath = QStandardPaths::standardLocations(QStandardPaths::HomeLocation);
     QString homePathCleaned {homePath.first().split(QDir::separator()).last()};
-    qDebug() << homePathCleaned;
     return homePathCleaned;
 }
 

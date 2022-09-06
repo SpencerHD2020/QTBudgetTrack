@@ -11,6 +11,7 @@
 #include <QFileInfo>
 #include <QFile>
 #include <QIODevice>
+#include <fstream>
 
 class BudgetData : public QObject
 {
@@ -22,10 +23,13 @@ private:
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
     QString dbPath {"/users"};
     QString dbBaseName {"budget.db"};
+    bool DEBUG {true};
 
     QString findHomeFolder();
     bool fileExists(QString filePath);
+    bool dbTablesExist();
     void initTables();
+    void eraseDBFile();
 
 };
 
