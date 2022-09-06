@@ -55,7 +55,7 @@ void BudgetData::eraseDBFile() {
 
 bool BudgetData::dbTablesExist() {
     bool tablesExist {true};
-    const QStringList tables {"TOTALS", "CC", "BILLS"};
+    const QStringList tables {"TOTALS", "CC", "BILLS", "TRANS"};
     try {
         db.open();
         for (const auto& t : tables) {
@@ -102,6 +102,13 @@ void BudgetData::initTables() {
                "name text, "
                "totVal real, "
                "curHeld real)");
+    // Create TRANS Table
+    query.exec("create table TRANS"
+               "(id integer primary key, "
+               "name text, "
+               "ammt real, "
+               "processed integer, "
+               "date text)");
     //query.exec("INSERT INTO person (firstname, lastname, age) VALUES (Spencer, Nowlin, 24)");
     db.close();
     qDebug() << "DB Tables Created!";
