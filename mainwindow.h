@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include "budgetdata.h"
+#include <QPushButton>
+#include <QDebug>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -18,5 +20,15 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    bool DEBUG {true};
+
+private slots:
+    void addTransactionButtonClicked();
+    void modifyTransactionButtonClicked();
+    void updateCCTotalsButtonClicked();
+    void modifyBillsButtonClicked();
+    void showTransactionsButtonClicked();
+    void showCreditDebtButtonClicked();
+    void showBillsButtonClicked();
 };
 #endif // MAINWINDOW_H
