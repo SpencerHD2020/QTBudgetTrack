@@ -53,6 +53,8 @@ void AddTransactionDialog::onContinueButtonClicked() {
         accept();
     }
     else {
+        // NOTE: As currently implemented it should be impossible to not have one selected, but I will leave this code here in the mean time.
+
         // Popup message to user requesting they check the proper button
         // NOTE: Could also change this to a ['+', '-'] spinbox
         QMessageBox err;

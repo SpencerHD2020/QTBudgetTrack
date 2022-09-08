@@ -86,11 +86,11 @@ void BudgetData::initTables() {
     // Create TOTALS Table
     query.exec("create table TOTALS "
               "(id integer primary key, "
-              "totalcash real, "
-              "bills real, "
-              "totAftBills real, "
-              "ccOwed real, "
-              "totAftcc real)");
+              "totalcash real DEFAULT 0.0, "
+              "bills real DEFAULT 0.0, "
+              "totAftBills real DEFAULT 0.0, "
+              "ccOwed real DEFAULT 0.0, "
+              "totAftcc real DEFAULT 0.0)");
     // Create CC Table
     query.exec("create table CC"
                "(id integer primary key, "
@@ -129,3 +129,154 @@ bool BudgetData::fileExists(QString filePath) {
         return false;
     }
 }
+
+QString BudgetData::formInsertStatement(QString tableName, QStringList cols, QStringList data) {
+    QString syn {"INSERT INTO " + tableName + " ("};
+    int colIndex {0};
+    for (const auto& col : cols) {
+        syn = syn + col;
+        if (colIndex != (cols.length() - 1)) {
+            syn = syn + ", ";
+        }
+        else {
+            syn = syn + ") VALUES (";
+        }
+        colIndex++;
+    }
+    int datIndex {0};
+    for (const auto& dat : data) {
+        syn = syn + dat;
+        if (datIndex != (data.length() - 1)) {
+            syn = syn + ", ";
+        }
+        else {
+            syn = syn + ");";
+        }
+        datIndex++;
+    }
+    if (DEBUG) {
+        qDebug() << "[BudgetData::formInsertStatement]: INSERT STATEMENT: ";
+        qDebug() << syn;
+    }
+    return syn;
+}
+
+
+void BudgetData::addTransaction(QString description, double ammt, QString date) {
+    // Add ammt to total value
+    bool totalsUpdated {updateTotals(TRANS_ADDED, ammt)};
+    if (totalsUpdated) {
+        // Add Entry to Transactions Table
+        db.open();
+        QSqlQuery q;
+        QStringList colNames {"name", "ammt", "processed", "date"};
+        QStringList data {("'" + description + "'"), QString::number(ammt), "1", ("'" + date + "'")};
+        QString syn {formInsertStatement("TRANS", colNames, data)};
+        bool transAdded {q.exec(syn)};
+        if (transAdded) {
+            // Emit update complete SIGNAL
+            emit transactionsUpdated();
+        }
+        else {
+            // Emit Update Failed SIGNAL
+            emit dbMutationFailed("Transaction was NOT added to DB.");
+        }
+        db.close();
+    }
+    else {
+        // Emit Update Failed SIGNAL
+        emit dbMutationFailed("Failed to add transaction to total cash in DB.");
+    }
+}
+
+bool BudgetData::updateTotals(int changeType, double change) {
+    if (changeType == TRANS_ADDED) {
+        // Transaction Added
+
+        // Find Current Totals
+        db.open();
+        QSqlQuery q;
+        q.exec("SELECT * FROM TOTALS;");
+        // Define Indices
+        QSqlRecord rec {q.record()};
+        int tc = rec.indexOf("totalcash");
+        int b = rec.indexOf("bills");
+        int cc = rec.indexOf("ccOwed");
+
+        double totalCash;
+        double bills;
+        double ccOwed;
+        double totAftBills;
+        double totAftcc;
+
+        if (q.next()) {
+            // There is at least one record
+            totalCash = q.value(tc).toDouble();
+            bills = q.value(b).toDouble();
+            ccOwed = q.value(cc).toDouble();
+            // Add New Transaction to total
+            totalCash += change;
+            // Figure new total with bills taken out
+            totAftBills = totalCash - bills;
+            // Figure new total with bills and cc taken out
+            totAftcc = totAftBills - ccOwed;
+            // Clear current table entry
+
+            // NOTE: We should first insert the new values and then if that succeeds delete the line where totalCash does not match calculated
+            //          if implemented, ensure value passed is not $0
+            q.exec("DELETE FROM TOTALS;");
+        }
+        else {
+            // Table is empty
+            totalCash = change;
+            bills = 0.0;
+            ccOwed = 0.0;
+            totAftBills = change;
+            totAftcc = change;
+        }
+        // Insert new totals into table
+        /*
+        QString values {QString::number(totalCash) + ", " + QString::number(bills) + ", " + QString::number(totAftBills) + ", " +
+                    QString::number(ccOwed) + ", " + QString::number(totAftcc)};
+
+        QString syn {QString::fromStdString("(INSERT INTO TOTALS ") + QString::fromStdString("(totalcash, bills, totAftBills, ccOwed, totAftcc) ") +
+                    QString::fromStdString("VALUES (") + values + QString::fromStdString("));")};
+        */
+        QStringList colNames {"totalcash", "bills", "totAftBills", "ccOwed", "totAftcc"};
+        QStringList data {QString::number(totalCash), QString::number(bills), QString::number(totAftBills), QString::number(ccOwed), QString::number(totAftcc)};
+        QString syn {formInsertStatement("TOTALS", colNames, data)};
+
+        bool valInserted {q.exec(syn)};
+        db.close();
+        if (valInserted) {
+            return true;
+        }
+        else {
+            if (DEBUG) {
+                qDebug() << "[BudgetData::updateTotals]: Failed to INSERT values into table";
+            }
+            return false;
+        }
+    }
+    else if (changeType == CC_UPDATE) {
+        // Credit Card Total Updates
+        // TODO: Implement this switch!
+        return false;
+    }
+    else {
+        return false;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

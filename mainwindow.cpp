@@ -6,8 +6,8 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    // Test DB Creation
-    BudgetData *db = new BudgetData();
+    // Instantiate DB Instance
+    db = new BudgetData();
     // Connect UI Buttons to SLOTS
     connect(this->ui->addTransButton, &QPushButton::clicked, this, &MainWindow::addTransactionButtonClicked);
     connect(this->ui->modifyTransButton, &QPushButton::clicked, this, &MainWindow::modifyTransactionButtonClicked);
@@ -16,6 +16,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this->ui->showTransactionsButton, &QPushButton::clicked, this, &MainWindow::showTransactionsButtonClicked);
     connect(this->ui->showCCButton, &QPushButton::clicked, this, &MainWindow::showCreditDebtButtonClicked);
     connect(this->ui->showBillsButton, &QPushButton::clicked, this, &MainWindow::showBillsButtonClicked);
+    // Connect DB SIGNALS to SLOT
+    connect(db, &BudgetData::dbMutationFailed, this, &MainWindow::dbError);
+    connect(db, &BudgetData::transactionsUpdated, this, &MainWindow::updateTransactionsTable);
 }
 
 MainWindow::~MainWindow()
@@ -85,10 +88,22 @@ void MainWindow::transactionInfoAdded(QString description, double ammt, QString 
         qDebug() << "Ammount: $" << ammt;
         qDebug() << "Date: " << date;
     }
-    // TODO: Pass Data to budgetData to add to SQL DB
+    // Add to SQL DB
+    db->addTransaction(description, ammt, date);
 }
 
 
+
+void MainWindow::dbError(QString err) {
+    QMessageBox errDialog;
+    errDialog.critical(0, "Database Error", err);
+    errDialog.setFixedSize(500, 200);
+}
+
+
+void MainWindow::updateTransactionsTable() {
+    // TODO: Update Transactions Table on UI IFFFFFF Transactions table is currently shown, else do nothing
+}
 
 
 
