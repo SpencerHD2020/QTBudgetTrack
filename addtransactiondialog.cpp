@@ -14,6 +14,7 @@ AddTransactionDialog::AddTransactionDialog(bool DEBUG, QWidget *parent) :
         radioButtonChecked(MONEY_SUBTRACTED);
     });
     connect(this->ui->continueButton, &QPushButton::clicked, this, &AddTransactionDialog::onContinueButtonClicked);
+    connect(this->ui->cancelButton, &QPushButton::clicked, this, &AddTransactionDialog::onCancelButtonClicked);
 }
 
 AddTransactionDialog::~AddTransactionDialog() {
@@ -43,14 +44,40 @@ void AddTransactionDialog::onContinueButtonClicked() {
             ammount = ammount * -1.0;
         }
         // Figure the date
-
+        date = (QString::number(this->ui->monthSpinBox->value())) + "/" + (QString::number(this->ui->daySpinBox->value())) + "/" + (QString::number(this->ui->yearSpinBox->value()));
         if (DEBUG) {
             qDebug() << "Description: " << description;
             qDebug() << "Ammount: " << ammount;
+            qDebug() << "Date: " << date;
         }
+        accept();
     }
     else {
-        // TODO: Popup message to user requesting they check the proper button
+        // Popup message to user requesting they check the proper button
         // NOTE: Could also change this to a ['+', '-'] spinbox
+        QMessageBox err;
+        err.critical(0, "Warning", "You must select 'Money Added' or 'Money Subtracted' to continue!");
+        err.setFixedSize(500, 200);
+
     }
+}
+
+
+QString AddTransactionDialog::getDescription() {
+    return description;
+}
+
+double AddTransactionDialog::getAmmount() {
+    return ammount;
+}
+
+QString AddTransactionDialog::getDate() {
+    return date;
+}
+
+void AddTransactionDialog::onCancelButtonClicked() {
+    if (DEBUG) {
+        qDebug() << "AddTransactionDialog: Cancel Button clicked";
+    }
+    reject();
 }

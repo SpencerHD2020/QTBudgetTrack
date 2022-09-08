@@ -3,8 +3,10 @@
 
 #include <QMainWindow>
 #include "budgetdata.h"
+#include "addtransactiondialog.h"
 #include <QPushButton>
 #include <QDebug>
+#include <QDialog>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -21,6 +23,8 @@ public:
 private:
     Ui::MainWindow *ui;
     bool DEBUG {true};
+    void transactionInfoAdded(QString description, double ammt, QString date);
+
 
 private slots:
     void addTransactionButtonClicked();

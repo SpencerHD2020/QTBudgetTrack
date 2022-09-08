@@ -7,6 +7,7 @@
 #include <QDebug>
 #include <QRadioButton>
 #include <QPushButton>
+#include <QMessageBox>
 #include "ui_AddTransactionDialog.h"
 
 QT_BEGIN_NAMESPACE

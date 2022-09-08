@@ -27,6 +27,17 @@ void MainWindow::addTransactionButtonClicked() {
     if (DEBUG) {
         qDebug() << "Add Transaction Button Clicked";
     }
+    AddTransactionDialog *addTransDialog = new AddTransactionDialog(DEBUG, this);
+    int ret = addTransDialog->exec();
+    if (ret == QDialog::Accepted) {
+        if (DEBUG) {
+            qDebug() << "MainWindow: User Accepted add trans dialog!";
+        }
+        transactionInfoAdded(addTransDialog->getDescription(), addTransDialog->getAmmount(), addTransDialog->getDate());
+    }
+    else if (DEBUG) {
+        qDebug() << "MainWindow: User canceled add trans dialog!";
+    }
 }
 
 void MainWindow::modifyTransactionButtonClicked() {
@@ -65,6 +76,17 @@ void MainWindow::showBillsButtonClicked() {
     }
 }
 
+
+
+void MainWindow::transactionInfoAdded(QString description, double ammt, QString date) {
+    if (DEBUG) {
+        qDebug() << "MainWindow: Transaction Info Received!";
+        qDebug() << "Description: " << description;
+        qDebug() << "Ammount: $" << ammt;
+        qDebug() << "Date: " << date;
+    }
+    // TODO: Pass Data to budgetData to add to SQL DB
+}
 
 
 
