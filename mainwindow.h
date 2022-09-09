@@ -8,6 +8,7 @@
 #include <QDebug>
 #include <QDialog>
 #include <QMessageBox>
+#include <QVector>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -26,6 +27,12 @@ private:
     bool DEBUG {true};
     void transactionInfoAdded(QString description, double ammt, QString date);
     BudgetData *db = nullptr;
+    enum ACTIVE_VIEWS {
+        TRANSACTIONS,
+        CC,
+        BILLS
+    };
+    int activeView {TRANSACTIONS};
 
 
 private slots:

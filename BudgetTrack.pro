@@ -12,12 +12,14 @@ SOURCES += \
     addtransactiondialog.cpp \
     budgetdata.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    transaction.cpp
 
 HEADERS += \
     addtransactiondialog.h \
     budgetdata.h \
-    mainwindow.h
+    mainwindow.h \
+    transaction.h
 
 FORMS += \
     AddTransactionDialog.ui \

@@ -43,6 +43,52 @@ BudgetData::BudgetData(QWidget *parent)
     }
 }
 
+bool BudgetData::compareTDate(const Transaction& i, const Transaction& j) {
+    return i.sortDate < j.sortDate;
+}
+
+
+QVector<Transaction> BudgetData::sortTransactions(QVector<Transaction> trans) {
+    std::sort(trans.begin(), trans.end(), compareTDate);
+    if (DEBUG) {
+        qDebug() << "[BudgetData::sortTransactions]: First: " << trans.first().getDate();
+        qDebug() << trans.last().getDate();
+    }
+    return trans;
+}
+
+
+QVector<Transaction> BudgetData::fetchTransactions() {
+    // Fetch Transactions from DB
+    QSqlQuery q;
+    db.open();
+    bool transQueried {q.exec("SELECT * FROM TRANS;")};
+    if (transQueried) {
+        // Init Vector
+        QVector<Transaction> unsortedTrans;
+        // Define Indices
+        QSqlRecord rec {q.record()};
+        int n = rec.indexOf("name");
+        int a = rec.indexOf("ammt");
+        int d = rec.indexOf("date");
+        // Loop through DB Result building Transaction Instances
+        while (q.next()) {
+            unsortedTrans.append(Transaction(q.value(n).toString(), q.value(a).toDouble(), q.value(d).toString()));
+        }
+        // Sort Vector [newVector]
+        QVector<Transaction> sortedTrans {sortTransactions(unsortedTrans)};
+        // Clear original Vector
+
+        db.close();
+        // Return Sorted Vector
+    }
+    else {
+        db.close();
+        emit dbMutationFailed("Failed to fetch Transactions");
+        return QVector<Transaction>();
+    }
+}
+
 
 void BudgetData::eraseDBFile() {
     //QFile dbFile(dbPath);

@@ -13,6 +13,10 @@
 #include <QIODevice>
 #include <fstream>
 #include <QSqlRecord>
+#include <QVector>
+#include <QDate>
+#include <algorithm>
+#include "transaction.h"
 
 class BudgetData : public QObject
 {
@@ -20,6 +24,8 @@ class BudgetData : public QObject
 public:
     BudgetData(QWidget *parent = nullptr);
     void addTransaction(QString description, double ammt, QString date);
+    QVector<Transaction> fetchTransactions();
+    static bool compareTDate(const Transaction& i, const Transaction& j);
 signals:
     void transactionsUpdated();
     void dbMutationFailed(QString err);
@@ -29,18 +35,19 @@ private:
     QString dbPath {"/users"};
     QString dbBaseName {"budget.db"};
     bool DEBUG {true};
+    enum Totals_Update_Types {
+        TRANS_ADDED,
+        CC_UPDATE
+    };
 
     QString findHomeFolder();
     bool fileExists(QString filePath);
     bool dbTablesExist();
     void initTables();
     void eraseDBFile();
-    enum Totals_Update_Types {
-        TRANS_ADDED,
-        CC_UPDATE
-    };
     bool updateTotals(int changeType, double change);
     QString formInsertStatement(QString tableName, QStringList cols, QStringList data);
+    QVector<Transaction> sortTransactions(QVector<Transaction> trans);
 
 };
 

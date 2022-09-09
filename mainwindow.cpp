@@ -19,6 +19,8 @@ MainWindow::MainWindow(QWidget *parent)
     // Connect DB SIGNALS to SLOT
     connect(db, &BudgetData::dbMutationFailed, this, &MainWindow::dbError);
     connect(db, &BudgetData::transactionsUpdated, this, &MainWindow::updateTransactionsTable);
+    // Populate the Transactions Table on App Start
+    updateTransactionsTable();
 }
 
 MainWindow::~MainWindow()
@@ -103,6 +105,8 @@ void MainWindow::dbError(QString err) {
 
 void MainWindow::updateTransactionsTable() {
     // TODO: Update Transactions Table on UI IFFFFFF Transactions table is currently shown, else do nothing
+
+
 }
 
 
