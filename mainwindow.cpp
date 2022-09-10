@@ -109,24 +109,26 @@ void MainWindow::updateTransactionsTable() {
         // Throw away old list
         transactionList.clear();
         transactionList = db->fetchTransactions();
-        // (Re)Build Table View
-        this->ui->tableView->clearSpans();
-        auto model = new QStandardItemModel();
-        this->ui->tableView->setModel(model);
+        if (transactionList.length() > 0) {
+            // (Re)Build Table View
+            this->ui->tableView->clearSpans();
+            auto model = new QStandardItemModel();
+            this->ui->tableView->setModel(model);
 
-        // Configure column Titles
-        model->setHorizontalHeaderItem(0, new QStandardItem("Date"));
-        model->setHorizontalHeaderItem(1, new QStandardItem("Description"));
-        model->setHorizontalHeaderItem(2, new QStandardItem("Price"));
+            // Configure column Titles
+            model->setHorizontalHeaderItem(0, new QStandardItem("Date"));
+            model->setHorizontalHeaderItem(1, new QStandardItem("Description"));
+            model->setHorizontalHeaderItem(2, new QStandardItem("Price"));
 
-        // Populate Table Rows
-        QList<QStandardItem*> rowData;
-        Q_FOREACH(auto const &item, transactionList) {
-            rowData.clear();
-            rowData << new QStandardItem(item.getDate());
-            rowData << new QStandardItem(item.getDescription());
-            rowData << new QStandardItem(item.getSAmmt());
-            model->appendRow(rowData);
+            // Populate Table Rows
+            QList<QStandardItem*> rowData;
+            Q_FOREACH(auto const &item, transactionList) {
+                rowData.clear();
+                rowData << new QStandardItem(item.getDate());
+                rowData << new QStandardItem(item.getDescription());
+                rowData << new QStandardItem(item.getSAmmt());
+                model->appendRow(rowData);
+            }
         }
     }
     // Regardless of if transactions are shown or not, we need to update the totals

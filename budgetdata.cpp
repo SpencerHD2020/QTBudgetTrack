@@ -139,13 +139,20 @@ QVector<Transaction> BudgetData::fetchTransactions() {
         while (q.next()) {
             unsortedTrans.append(Transaction(q.value(n).toString(), q.value(a).toDouble(), q.value(d).toString()));
         }
-        // Sort Vector [newVector]
-        QVector<Transaction> sortedTrans {sortTransactions(unsortedTrans)};
-        // Clear original Vector
+        // Need to ensure we have transactions
+        if (unsortedTrans.length() > 0) {
+            // Sort Vector [newVector]
+            QVector<Transaction> sortedTrans {sortTransactions(unsortedTrans)};
+            // Clear original Vector
 
-        db.close();
-        // Return Sorted Vector
-        return sortedTrans;
+            db.close();
+            // Return Sorted Vector
+            return sortedTrans;
+        }
+        else {
+            db.close();
+            return QVector<Transaction>();
+        }
     }
     else {
         db.close();
