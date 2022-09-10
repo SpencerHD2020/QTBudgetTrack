@@ -129,6 +129,10 @@ void MainWindow::updateTransactionsTable() {
             model->appendRow(rowData);
         }
     }
+    // Regardless of if transactions are shown or not, we need to update the totals
+    QStringList totals {db->fetchTotals()};
+    this->ui->acctTotalValue->setText(totals[ACCT_TOTAL]);
+    this->ui->acctFixedValue->setText(totals[FIX_TOTAL]);
 }
 
 

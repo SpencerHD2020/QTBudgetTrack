@@ -26,6 +26,7 @@ public:
     void addTransaction(QString description, double ammt, QString date);
     QVector<Transaction> fetchTransactions();
     static bool compareTDate(const Transaction& i, const Transaction& j);
+    QStringList fetchTotals();
 signals:
     void transactionsUpdated();
     void dbMutationFailed(QString err);
@@ -39,6 +40,10 @@ private:
         TRANS_ADDED,
         CC_UPDATE
     };
+    enum TOTALS_RETURN {
+        ACCT_TOTAL,
+        FIX_TOTAL
+    };
 
     QString findHomeFolder();
     bool fileExists(QString filePath);
@@ -48,6 +53,7 @@ private:
     bool updateTotals(int changeType, double change);
     QString formInsertStatement(QString tableName, QStringList cols, QStringList data);
     QVector<Transaction> sortTransactions(QVector<Transaction> trans);
+    QString formatDoubleAsMoneyString(double val);
 
 };
 

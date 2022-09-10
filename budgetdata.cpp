@@ -57,6 +57,67 @@ QVector<Transaction> BudgetData::sortTransactions(QVector<Transaction> trans) {
     return trans;
 }
 
+QString BudgetData::formatDoubleAsMoneyString(double val) {
+    QString sAmmt {};
+    if (val < 0) {
+        sAmmt = "-$";
+        val *= -1;
+    }
+    else {
+        sAmmt = "$";
+    }
+    QString stringA {QString::number(val)};
+    if (stringA.contains('.')) {
+        QStringList ammtSplit {stringA.split(".")};
+        sAmmt = sAmmt + ammtSplit[0] + ".";
+        if (ammtSplit[1].length() == 1) {
+            sAmmt = sAmmt + "0" + ammtSplit[1];
+        }
+        else {
+            sAmmt = sAmmt + ammtSplit[1];
+        }
+    }
+    else {
+        sAmmt = sAmmt + stringA + ".00";
+    }
+    return sAmmt;
+}
+
+
+QStringList BudgetData::fetchTotals() {
+    QSqlQuery q;
+    db.open();
+    bool initQuery {q.exec("SELECT * FROM TOTALS;")};
+    if (initQuery) {
+        // Define Indices
+        QSqlRecord rec {q.record()};
+        int tc = rec.indexOf("totalcash");
+        int tac = rec.indexOf("totAftcc");
+        bool innerQuery {q.next()};
+        if (innerQuery) {
+            double totalCash {q.value(tc).toDouble()};
+            double totalFixed {q.value(tac).toDouble()};
+            QStringList values;
+            values.append(formatDoubleAsMoneyString(totalCash));
+            values.append(formatDoubleAsMoneyString(totalFixed));
+            db.close();
+            return values;
+        }
+        else {
+            emit dbMutationFailed("DB ERROR: No total values retained!");
+            QStringList values {"$0", "$0"};
+            db.close();
+            return values;
+        }
+    }
+    else {
+        emit dbMutationFailed("Failed to Query DB for new totals.");
+        QStringList values {"$0", "$0"};
+        db.close();
+        return values;
+    }
+}
+
 
 QVector<Transaction> BudgetData::fetchTransactions() {
     // NOTE: EVENTUALLY we will have to get only so many results and then paginate this

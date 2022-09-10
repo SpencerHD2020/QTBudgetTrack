@@ -36,6 +36,10 @@ private:
         CC,
         BILLS
     };
+    enum TOTALS_RETURN {
+        ACCT_TOTAL,
+        FIX_TOTAL
+    };
     int activeView {TRANSACTIONS};
     QVector<Transaction> transactionList;
 
