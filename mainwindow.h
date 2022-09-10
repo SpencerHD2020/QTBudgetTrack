@@ -9,6 +9,10 @@
 #include <QDialog>
 #include <QMessageBox>
 #include <QVector>
+#include <QStandardItemModel>
+#include <QStandardItem>
+
+#include "transaction.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -33,6 +37,7 @@ private:
         BILLS
     };
     int activeView {TRANSACTIONS};
+    QVector<Transaction> transactionList;
 
 
 private slots:

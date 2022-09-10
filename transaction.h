@@ -8,9 +8,10 @@ class Transaction
 {
 public:
     Transaction(QString des, double ammt, QString date) : description(des), ammount(ammt), date(date) { parseDate(); };
-    QString getDescription() { return description; };
+    QString getDescription() const { return description; };
     double getAmmount() { return ammount; };
-    QString getDate() { return date; };
+    QString getSAmmt() const;
+    QString getDate() const { return date; };
     int getMonth() { return month; };
     int getDay() { return day; };
     int getYear() { return year; };

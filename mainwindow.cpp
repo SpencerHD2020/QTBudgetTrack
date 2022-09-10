@@ -104,9 +104,31 @@ void MainWindow::dbError(QString err) {
 
 
 void MainWindow::updateTransactionsTable() {
-    // TODO: Update Transactions Table on UI IFFFFFF Transactions table is currently shown, else do nothing
+    // Update Transactions Table on UI if Transactions table is currently shown
+    if (activeView == TRANSACTIONS) {
+        // Throw away old list
+        transactionList.clear();
+        transactionList = db->fetchTransactions();
+        // (Re)Build Table View
+        this->ui->tableView->clearSpans();
+        auto model = new QStandardItemModel();
+        this->ui->tableView->setModel(model);
 
+        // Configure column Titles
+        model->setHorizontalHeaderItem(0, new QStandardItem("Date"));
+        model->setHorizontalHeaderItem(1, new QStandardItem("Description"));
+        model->setHorizontalHeaderItem(2, new QStandardItem("Price"));
 
+        // Populate Table Rows
+        QList<QStandardItem*> rowData;
+        Q_FOREACH(auto const &item, transactionList) {
+            rowData.clear();
+            rowData << new QStandardItem(item.getDate());
+            rowData << new QStandardItem(item.getDescription());
+            rowData << new QStandardItem(item.getSAmmt());
+            model->appendRow(rowData);
+        }
+    }
 }
 
 

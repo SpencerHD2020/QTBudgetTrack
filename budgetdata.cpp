@@ -59,6 +59,9 @@ QVector<Transaction> BudgetData::sortTransactions(QVector<Transaction> trans) {
 
 
 QVector<Transaction> BudgetData::fetchTransactions() {
+    // NOTE: EVENTUALLY we will have to get only so many results and then paginate this
+    // NOTE: We should save this Vector and make a check to this function that would just add the new transaction and find its place in the list!
+
     // Fetch Transactions from DB
     QSqlQuery q;
     db.open();
@@ -81,6 +84,7 @@ QVector<Transaction> BudgetData::fetchTransactions() {
 
         db.close();
         // Return Sorted Vector
+        return sortedTrans;
     }
     else {
         db.close();
