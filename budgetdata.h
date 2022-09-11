@@ -27,8 +27,12 @@ public:
     QVector<Transaction> fetchTransactions();
     static bool compareTDate(const Transaction& i, const Transaction& j);
     QStringList fetchTotals();
+    QStringList fetchBillNames();
+    void addBill(QString billName, double ammt);
+    void modifyBill(QString billName, double ammt);
 signals:
     void transactionsUpdated();
+    void billsUpdates();
     void dbMutationFailed(QString err);
 private:
     QString path = "/Users/spencernowlin/BudgetDB/budget.db";

@@ -13,17 +13,20 @@ SOURCES += \
     budgetdata.cpp \
     main.cpp \
     mainwindow.cpp \
+    modifybillsdialog.cpp \
     transaction.cpp
 
 HEADERS += \
     addtransactiondialog.h \
     budgetdata.h \
     mainwindow.h \
+    modifybillsdialog.h \
     transaction.h
 
 FORMS += \
     AddTransactionDialog.ui \
-    mainwindow.ui
+    mainwindow.ui \
+    modifybillsdialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

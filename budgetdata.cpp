@@ -119,6 +119,63 @@ QStringList BudgetData::fetchTotals() {
 }
 
 
+
+QStringList BudgetData::fetchBillNames() {
+    QSqlQuery q;
+    db.open();
+    bool billsQueried {q.exec("SELECT * FROM BILLS;")};
+    if (billsQueried) {
+        QStringList billNames {};
+        QSqlRecord rec {q.record()};
+        int n = rec.indexOf("name");
+        while (q.next()) {
+            billNames.append(q.value(n).toString());
+        }
+        db.close();
+        return billNames;
+    }
+    else {
+        db.close();
+        emit dbMutationFailed("FAILED to fetch bills from database!");
+        return QStringList();
+    }
+}
+
+void BudgetData::addBill(QString billName, double ammt) {
+    QSqlQuery q;
+    db.open();
+
+    /*
+create table BILLS"
+               "(id integer primary key, "
+               "name text, "
+               "totVal real, "
+               "curHeld real)
+    */
+
+    // NOTE: Need to update totals to reflect new BILL FIRST!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // ANOTHER NOTE: For all bill updates should we just add to db first and then recalculate everything instead of having all the switches?
+    //          at least for bills and CC, transactions would take too long
+
+
+
+
+    QStringList colNames {"name", "totVal", "curHeld"};
+    QStringList data {("'" + billName + "'"), QString::number(ammt), "0"};
+    QString syn {formInsertStatement("BILLS", colNames, data)};
+    if (q.exec(syn)) {
+
+
+
+        db.close();
+    }
+    else {
+        emit dbMutationFailed("FAILED to Add bill to database!");
+        db.close();
+    }
+}
+
+
 QVector<Transaction> BudgetData::fetchTransactions() {
     // NOTE: EVENTUALLY we will have to get only so many results and then paginate this
     // NOTE: We should save this Vector and make a check to this function that would just add the new transaction and find its place in the list!

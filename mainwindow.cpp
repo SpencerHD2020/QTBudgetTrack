@@ -61,6 +61,25 @@ void MainWindow::modifyBillsButtonClicked() {
     if (DEBUG) {
         qDebug() << "Modify Bills Button Clicked";
     }
+    // Fetch Current Bills - TODO: Also fetch their values and populate those in the dialog!
+    QStringList billNames {db->fetchBillNames()};
+    ModifyBillsDialog *modifyBillsDialog = new ModifyBillsDialog(billNames, DEBUG, this);
+    int ret = modifyBillsDialog->exec();
+    if (ret == QDialog::Accepted) {
+        if (DEBUG) {
+            qDebug() << "MainWindow: User Accepted modify bills dialog";
+        }
+        // Process Update
+        if (modifyBillsDialog->getLastUserOperation() == MODIFY_BILL) {
+            // User is changing an existing bill
+        }
+        else if (modifyBillsDialog->getLastUserOperation() == ADD_BILL) {
+            // User created a new bill
+        }
+    }
+    else if (DEBUG) {
+        qDebug() << "MainWindow: User canceled modify bills dialog";
+    }
 }
 
 void MainWindow::showTransactionsButtonClicked() {

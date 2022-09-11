@@ -13,6 +13,7 @@
 #include <QStandardItem>
 
 #include "transaction.h"
+#include "modifybillsdialog.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -40,6 +41,11 @@ private:
         ACCT_TOTAL,
         FIX_TOTAL
     };
+    enum MOD_BILLS_OPERATION {
+        MODIFY_BILL,
+        ADD_BILL
+    };
+
     int activeView {TRANSACTIONS};
     QVector<Transaction> transactionList;
 
