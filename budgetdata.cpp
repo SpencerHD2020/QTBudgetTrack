@@ -164,10 +164,16 @@ create table BILLS"
     QStringList data {("'" + billName + "'"), QString::number(ammt), "0"};
     QString syn {formInsertStatement("BILLS", colNames, data)};
     if (q.exec(syn)) {
-
-
-
-        db.close();
+        // Recalculate TOTALS
+        bool totalsUpdated {updateTotals(BILLS_UPDATE, ammt)};
+        if (totalsUpdated) {
+            db.close();
+            emit billsUpdated();
+        }
+        else {
+            db.close();
+            emit dbMutationFailed("FAILED to update totals in database!");
+        }
     }
     else {
         emit dbMutationFailed("FAILED to Add bill to database!");
@@ -185,7 +191,7 @@ QVector<Transaction> BudgetData::fetchTransactions() {
     db.open();
     bool transQueried {q.exec("SELECT * FROM TRANS;")};
     if (transQueried) {
-        // Init Vector
+        // Init Vector - NOTE: THIS SHOULD go on the heap at some point!
         QVector<Transaction> unsortedTrans;
         // Define Indices
         QSqlRecord rec {q.record()};
@@ -215,6 +221,36 @@ QVector<Transaction> BudgetData::fetchTransactions() {
         db.close();
         emit dbMutationFailed("Failed to fetch Transactions");
         return QVector<Transaction>();
+    }
+}
+
+
+QVector<Bill> BudgetData::fetchBills() {
+    QSqlQuery q;
+    db.open();
+    bool billsQueried {q.exec("SELECT * FROM BILLS;")};
+    if (billsQueried) {
+        // Init Vector
+        QVector<Bill> bills;
+        // Define Indices
+        QSqlRecord rec {q.record()};
+        int n {rec.indexOf("name")};
+        int t {rec.indexOf("totVal")};
+        while (q.next()) {
+            bills.append(Bill(q.value(n).toString(), q.value(t).toDouble()));
+        }
+        db.close();
+        if (bills.length() > 0) {
+            return bills;
+        }
+        else {
+            return QVector<Bill>();
+        }
+    }
+    else {
+        db.close();
+        emit dbMutationFailed("Failed to fetch Bills");
+        return QVector<Bill>();
     }
 }
 
@@ -433,9 +469,73 @@ bool BudgetData::updateTotals(int changeType, double change) {
             return false;
         }
     }
+    else if (changeType == BILLS_UPDATE) {
+        // Bills and Credit Card Total Updates
+        // IMPORTANT! For the time being I am not implementing Bill hold values but this logic will need to heavily change once that is implemented!
+        db.open();
+        QSqlQuery q;
+
+        // Calculate new BILLS total from BILLS Table
+        double totalBills {0.0};
+        q.exec("SELECT * FROM BILLS;");
+        // Define indices
+        QSqlRecord billsRec {q.record()};
+        int tot {billsRec.indexOf("totVal")};
+        while (q.next()) {
+            totalBills += q.value(tot).toDouble();
+        }
+        // Need to recalculate all downstream totals in case the bill was changed not added
+        q.exec("SELECT * FROM TOTALS;");
+        // Define Indices
+        QSqlRecord rec {q.record()};
+        int tc = rec.indexOf("totalcash");
+        int cc = rec.indexOf("ccOwed");
+
+        double totalCash;
+        double ccOwed;
+        double totAftBills;
+        double totAftcc;
+        if (q.next()) {
+            // There is at least one record
+            totalCash = q.value(tc).toDouble();
+            ccOwed = q.value(cc).toDouble();
+            // Figure new total with bills taken out
+            totAftBills = totalCash - totalBills;
+            // Figure new total with bills and cc taken out
+            totAftcc = totAftBills - ccOwed;
+            // Clear current table entry
+
+            // NOTE: We should first insert the new values and then if that succeeds delete the line where totalCash does not match calculated
+            //          if implemented, ensure value passed is not $0
+            q.exec("DELETE FROM TOTALS;");
+        }
+        else {
+            // Nothing in Table
+            totalCash = 0.0;
+            ccOwed = 0.0;
+            totAftBills = totalCash - totalBills;
+            totAftcc = totAftBills;
+        }
+
+        // Update in TOTALS table
+        QStringList colNames {"totalcash", "bills", "totAftBills", "ccOwed", "totAftcc"};
+        QStringList data {QString::number(totalCash), QString::number(totalBills), QString::number(totAftBills), QString::number(ccOwed), QString::number(totAftcc)};
+        QString syn {formInsertStatement("TOTALS", colNames, data)};
+
+        bool valInserted {q.exec(syn)};
+        db.close();
+        if (valInserted) {
+            return true;
+        }
+        else {
+            if (DEBUG) {
+                qDebug() << "[BudgetData::updateTotals]: Failed to INSERT values into table";
+            }
+            return false;
+        }
+    }
     else if (changeType == CC_UPDATE) {
-        // Credit Card Total Updates
-        // TODO: Implement this switch!
+        //TODO
         return false;
     }
     else {

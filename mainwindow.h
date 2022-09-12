@@ -13,6 +13,7 @@
 #include <QStandardItem>
 
 #include "transaction.h"
+#include "bill.h"
 #include "modifybillsdialog.h"
 
 QT_BEGIN_NAMESPACE
@@ -46,8 +47,10 @@ private:
         ADD_BILL
     };
 
-    int activeView {TRANSACTIONS};
+    int activeView {};
+    // NOTE: Eventually this should go on the heap
     QVector<Transaction> transactionList;
+    QVector<Bill> billList;
 
 
 private slots:
@@ -58,8 +61,10 @@ private slots:
     void showTransactionsButtonClicked();
     void showCreditDebtButtonClicked();
     void showBillsButtonClicked();
+    void updateUITotals();
 public slots:
     void dbError(QString err);
     void updateTransactionsTable();
+    void updateBillsTable();
 };
 #endif // MAINWINDOW_H

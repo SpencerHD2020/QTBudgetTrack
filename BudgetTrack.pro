@@ -10,6 +10,7 @@ CONFIG += c++11
 
 SOURCES += \
     addtransactiondialog.cpp \
+    bill.cpp \
     budgetdata.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -18,6 +19,7 @@ SOURCES += \
 
 HEADERS += \
     addtransactiondialog.h \
+    bill.h \
     budgetdata.h \
     mainwindow.h \
     modifybillsdialog.h \

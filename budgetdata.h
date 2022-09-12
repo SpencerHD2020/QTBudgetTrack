@@ -17,6 +17,7 @@
 #include <QDate>
 #include <algorithm>
 #include "transaction.h"
+#include "bill.h"
 
 class BudgetData : public QObject
 {
@@ -30,9 +31,10 @@ public:
     QStringList fetchBillNames();
     void addBill(QString billName, double ammt);
     void modifyBill(QString billName, double ammt);
+    QVector<Bill> fetchBills();
 signals:
     void transactionsUpdated();
-    void billsUpdates();
+    void billsUpdated();
     void dbMutationFailed(QString err);
 private:
     QString path = "/Users/spencernowlin/BudgetDB/budget.db";
@@ -42,7 +44,8 @@ private:
     bool DEBUG {true};
     enum Totals_Update_Types {
         TRANS_ADDED,
-        CC_UPDATE
+        CC_UPDATE,
+        BILLS_UPDATE
     };
     enum TOTALS_RETURN {
         ACCT_TOTAL,

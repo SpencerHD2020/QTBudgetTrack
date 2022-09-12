@@ -19,7 +19,9 @@ MainWindow::MainWindow(QWidget *parent)
     // Connect DB SIGNALS to SLOT
     connect(db, &BudgetData::dbMutationFailed, this, &MainWindow::dbError);
     connect(db, &BudgetData::transactionsUpdated, this, &MainWindow::updateTransactionsTable);
+    connect(db, &BudgetData::billsUpdated, this, &MainWindow::updateBillsTable);
     // Populate the Transactions Table on App Start
+    activeView = TRANSACTIONS;
     updateTransactionsTable();
 }
 
@@ -75,6 +77,7 @@ void MainWindow::modifyBillsButtonClicked() {
         }
         else if (modifyBillsDialog->getLastUserOperation() == ADD_BILL) {
             // User created a new bill
+            db->addBill(modifyBillsDialog->getBillName(), modifyBillsDialog->getAmmt());
         }
     }
     else if (DEBUG) {
@@ -85,6 +88,10 @@ void MainWindow::modifyBillsButtonClicked() {
 void MainWindow::showTransactionsButtonClicked() {
     if (DEBUG) {
         qDebug() << "Show Transactions Button Clicked";
+    }
+    if (activeView != TRANSACTIONS) {
+        activeView = TRANSACTIONS;
+        updateTransactionsTable();
     }
 }
 
@@ -97,6 +104,10 @@ void MainWindow::showCreditDebtButtonClicked() {
 void MainWindow::showBillsButtonClicked() {
     if (DEBUG) {
         qDebug() << "Show Bills Button Clicked";
+    }
+    if (activeView != BILLS) {
+        activeView = BILLS;
+        updateBillsTable();
     }
 }
 
@@ -119,6 +130,13 @@ void MainWindow::dbError(QString err) {
     QMessageBox errDialog;
     errDialog.critical(0, "Database Error", err);
     errDialog.setFixedSize(500, 200);
+}
+
+
+void MainWindow::updateUITotals() {
+    QStringList totals {db->fetchTotals()};
+    this->ui->acctTotalValue->setText(totals[ACCT_TOTAL]);
+    this->ui->acctFixedValue->setText(totals[FIX_TOTAL]);
 }
 
 
@@ -149,11 +167,50 @@ void MainWindow::updateTransactionsTable() {
                 model->appendRow(rowData);
             }
         }
+        else {
+            // Clear the UI
+            this->ui->tableView->clearSpans();
+        }
     }
     // Regardless of if transactions are shown or not, we need to update the totals
-    QStringList totals {db->fetchTotals()};
-    this->ui->acctTotalValue->setText(totals[ACCT_TOTAL]);
-    this->ui->acctFixedValue->setText(totals[FIX_TOTAL]);
+    updateUITotals();
+}
+
+
+void MainWindow::updateBillsTable() {
+    // Update Bills Table on UI if BILLS table is currently shown
+    if (activeView == BILLS) {
+        // Destroy old list
+        billList.clear();
+        billList = db->fetchBills();
+        if (billList.length() > 0) {
+            // (Re)Build Table View
+            this->ui->tableView->clearSpans();
+            auto model = new QStandardItemModel();
+            this->ui->tableView->setModel(model);
+
+            // Configure column Titles
+            model->setHorizontalHeaderItem(0, new QStandardItem("Name"));
+            model->setHorizontalHeaderItem(1, new QStandardItem("Ammount"));
+            model->setHorizontalHeaderItem(2, new QStandardItem("Held"));
+
+            // Populate Table Rows
+            QList<QStandardItem*> rowData;
+            Q_FOREACH(auto const &item, billList) {
+                rowData.clear();
+                rowData << new QStandardItem(item.getName());
+                rowData << new QStandardItem(item.getSAmmt());
+                rowData << new QStandardItem(item.getSAmmt());
+                model->appendRow(rowData);
+            }
+        }
+        else {
+            // Clear the UI
+            this->ui->tableView->clearSpans();
+        }
+    }
+    // Regardless of if bills are shown or not, we need to update the totals
+    updateUITotals();
 }
 
 
