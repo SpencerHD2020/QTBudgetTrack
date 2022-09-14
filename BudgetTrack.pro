@@ -12,23 +12,30 @@ SOURCES += \
     addtransactiondialog.cpp \
     bill.cpp \
     budgetdata.cpp \
+    credcard.cpp \
+    dbitem.cpp \
     main.cpp \
     mainwindow.cpp \
     modifybillsdialog.cpp \
+    modifyccdialog.cpp \
     transaction.cpp
 
 HEADERS += \
     addtransactiondialog.h \
     bill.h \
     budgetdata.h \
+    credcard.h \
+    dbitem.h \
     mainwindow.h \
     modifybillsdialog.h \
+    modifyccdialog.h \
     transaction.h
 
 FORMS += \
     AddTransactionDialog.ui \
     mainwindow.ui \
-    modifybillsdialog.ui
+    modifybillsdialog.ui \
+    modifyccdialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

@@ -141,24 +141,57 @@ QStringList BudgetData::fetchBillNames() {
     }
 }
 
+
+QStringList BudgetData::fetchCCNames() {
+    QSqlQuery q;
+    db.open();
+    bool cardsQueried {q.exec("SELECT * FROM CC;")};
+    if (cardsQueried) {
+        QStringList cardNames {};
+        QSqlRecord rec {q.record()};
+        int n = rec.indexOf("name");
+        while (q.next()) {
+            cardNames.append(q.value(n).toString());
+        }
+        db.close();
+        return cardNames;
+    }
+    else {
+        db.close();
+        emit dbMutationFailed("FAILED to fetch credit cards from database!");
+        return QStringList();
+    }
+}
+
+void BudgetData::addCC(QString cardName, double ammt) {
+    QSqlQuery q;
+    db.open();
+    QStringList colNames {"name", "owed"};
+    QStringList data {("'" + cardName + "'"), QString::number(ammt)};
+    QString syn {formInsertStatement("CC", colNames, data)};
+    if (q.exec(syn)) {
+        // Recalculate TOTALS
+        bool totalsUpdated {updateTotals(CC_UPDATE, ammt)};
+        db.close();
+        if (totalsUpdated) {
+            emit ccUpdated();
+        }
+        else {
+            emit dbMutationFailed("Failed to update totals in db");
+        }
+    }
+    else {
+        emit dbMutationFailed("FAILED to Add CC to database");
+        db.close();
+    }
+}
+
 void BudgetData::addBill(QString billName, double ammt) {
     QSqlQuery q;
     db.open();
-
-    /*
-create table BILLS"
-               "(id integer primary key, "
-               "name text, "
-               "totVal real, "
-               "curHeld real)
-    */
-
     // NOTE: Need to update totals to reflect new BILL FIRST!!!!!!!!!!!!!!!!!!!!!!!!!!
     // ANOTHER NOTE: For all bill updates should we just add to db first and then recalculate everything instead of having all the switches?
     //          at least for bills and CC, transactions would take too long
-
-
-
 
     QStringList colNames {"name", "totVal", "curHeld"};
     QStringList data {("'" + billName + "'"), QString::number(ammt), "0"};
@@ -251,6 +284,35 @@ QVector<Bill> BudgetData::fetchBills() {
         db.close();
         emit dbMutationFailed("Failed to fetch Bills");
         return QVector<Bill>();
+    }
+}
+
+QVector<CredCard> BudgetData::fetchCCData() {
+    QSqlQuery q;
+    db.open();
+    bool cardsQueried {q.exec("SELECT * FROM CC;")};
+    if (cardsQueried) {
+        // Init Vector
+        QVector<CredCard> cards;
+        // Define Indices
+        QSqlRecord rec {q.record()};
+        int n {rec.indexOf("name")};
+        int o {rec.indexOf("owed")};
+        while (q.next()) {
+            cards.append(CredCard(q.value(n).toString(), q.value(o).toDouble()));
+        }
+        db.close();
+        if (cards.length() > 0) {
+            return cards;
+        }
+        else {
+            return QVector<CredCard>();
+        }
+    }
+    else {
+        db.close();
+        emit dbMutationFailed("Failed to fetch credit card data.");
+        return QVector<CredCard>();
     }
 }
 
@@ -470,7 +532,7 @@ bool BudgetData::updateTotals(int changeType, double change) {
         }
     }
     else if (changeType == BILLS_UPDATE) {
-        // Bills and Credit Card Total Updates
+        // Bills Total Updates
         // IMPORTANT! For the time being I am not implementing Bill hold values but this logic will need to heavily change once that is implemented!
         db.open();
         QSqlQuery q;
@@ -535,8 +597,69 @@ bool BudgetData::updateTotals(int changeType, double change) {
         }
     }
     else if (changeType == CC_UPDATE) {
-        //TODO
-        return false;
+        // CC Total Updates
+        // IMPORTANT! For the time being I am not implementing Bill hold values but this logic will need to heavily change once that is implemented!
+        db.open();
+        QSqlQuery q;
+
+        // Calculate new CC total from CC Table
+        double totalDebt {0.0};
+        q.exec("SELECT * FROM CC;");
+        // Define indices
+        QSqlRecord ccRec {q.record()};
+        int owe {ccRec.indexOf("owed")};
+        while (q.next()) {
+            totalDebt += q.value(owe).toDouble();
+        }
+        // Need to recalculate all downstream totals in case the bill was changed not added
+        q.exec("SELECT * FROM TOTALS;");
+        // Define Indices
+        QSqlRecord rec {q.record()};
+        int tc = rec.indexOf("totalcash");
+        int bill = rec.indexOf("bills");
+
+        double totalCash;
+        double bills;
+        double totAftBills;
+        double totAftcc;
+        if (q.next()) {
+            // There is at least one record
+            totalCash = q.value(tc).toDouble();
+            bills = q.value(bill).toDouble();
+            // Figure new total with bills taken out
+            totAftBills = totalCash - bills;
+            // Figure new total with bills and cc taken out
+            totAftcc = totAftBills - totalDebt;
+            // Clear current table entry
+
+            // NOTE: We should first insert the new values and then if that succeeds delete the line where totalCash does not match calculated
+            //          if implemented, ensure value passed is not $0
+            q.exec("DELETE FROM TOTALS;");
+        }
+        else {
+            // Nothing in Table
+            totalCash = 0.0;
+            bills = 0.0;
+            totAftBills = 0.0;
+            totAftcc = totalCash - totalDebt;
+        }
+
+        // Update in TOTALS table
+        QStringList colNames {"totalcash", "bills", "totAftBills", "ccOwed", "totAftcc"};
+        QStringList data {QString::number(totalCash), QString::number(bills), QString::number(totAftBills), QString::number(totalDebt), QString::number(totAftcc)};
+        QString syn {formInsertStatement("TOTALS", colNames, data)};
+
+        bool valInserted {q.exec(syn)};
+        db.close();
+        if (valInserted) {
+            return true;
+        }
+        else {
+            if (DEBUG) {
+                qDebug() << "[BudgetData::updateTotals]: Failed to INSERT values into table";
+            }
+            return false;
+        }
     }
     else {
         return false;

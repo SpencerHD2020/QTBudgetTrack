@@ -20,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(db, &BudgetData::dbMutationFailed, this, &MainWindow::dbError);
     connect(db, &BudgetData::transactionsUpdated, this, &MainWindow::updateTransactionsTable);
     connect(db, &BudgetData::billsUpdated, this, &MainWindow::updateBillsTable);
+    connect(db, &BudgetData::ccUpdated, this, &MainWindow::updateCCTable);
     // Populate the Transactions Table on App Start
     activeView = TRANSACTIONS;
     updateTransactionsTable();
@@ -57,6 +58,25 @@ void MainWindow::updateCCTotalsButtonClicked() {
     if (DEBUG) {
         qDebug() << "Update CC Totals Button Clicked";
     }
+    QStringList cardNames {db->fetchCCNames()};
+    modifyccdialog *modifyCCDialog = new modifyccdialog(cardNames, DEBUG, this);
+    int ret = modifyCCDialog->exec();
+    if (ret == QDialog::Accepted) {
+        if (DEBUG) {
+            qDebug() << "MainWindow: User Accepted modify cc dialog";
+        }
+        // Process Update
+        if (modifyCCDialog->getLastUserOperation() == MODIFY_BCC) {
+            // User is changing an existing card debt
+        }
+        else if (modifyCCDialog->getLastUserOperation() == ADD_BCC) {
+            // User created a new card
+            db->addCC(modifyCCDialog->getCCName(), modifyCCDialog->getAmmt());
+        }
+    }
+    else if (DEBUG) {
+        qDebug() << "MainWindow: User canceled modify cc dialog";
+    }
 }
 
 void MainWindow::modifyBillsButtonClicked() {
@@ -72,10 +92,10 @@ void MainWindow::modifyBillsButtonClicked() {
             qDebug() << "MainWindow: User Accepted modify bills dialog";
         }
         // Process Update
-        if (modifyBillsDialog->getLastUserOperation() == MODIFY_BILL) {
+        if (modifyBillsDialog->getLastUserOperation() == MODIFY_BCC) {
             // User is changing an existing bill
         }
-        else if (modifyBillsDialog->getLastUserOperation() == ADD_BILL) {
+        else if (modifyBillsDialog->getLastUserOperation() == ADD_BCC) {
             // User created a new bill
             db->addBill(modifyBillsDialog->getBillName(), modifyBillsDialog->getAmmt());
         }
@@ -98,6 +118,10 @@ void MainWindow::showTransactionsButtonClicked() {
 void MainWindow::showCreditDebtButtonClicked() {
     if (DEBUG) {
         qDebug() << "Show Credit Debt Button Clicked";
+    }
+    if (activeView != CC) {
+        activeView = CC;
+        updateCCTable();
     }
 }
 
@@ -213,6 +237,40 @@ void MainWindow::updateBillsTable() {
     updateUITotals();
 }
 
+
+void MainWindow::updateCCTable() {
+    // Update CC Table on UI if CC table is currently shown
+    if (activeView == CC) {
+        // Destroy old list
+        cardList.clear();
+        cardList = db->fetchCCData();
+        if (cardList.length() > 0) {
+            // (Re)Build Table View
+            this->ui->tableView->clearSpans();
+            auto model = new QStandardItemModel();
+            this->ui->tableView->setModel(model);
+
+            // Configure column Titles
+            model->setHorizontalHeaderItem(0, new QStandardItem("Name"));
+            model->setHorizontalHeaderItem(1, new QStandardItem("Debt Owed"));
+
+            // Populate Table Rows
+            QList<QStandardItem*> rowData;
+            Q_FOREACH(auto const &item, cardList) {
+                rowData.clear();
+                rowData << new QStandardItem(item.getDescription());
+                rowData << new QStandardItem(item.getSAmmt());
+                model->appendRow(rowData);
+            }
+        }
+        else {
+            // Clear the UI
+            this->ui->tableView->clearSpans();
+        }
+    }
+    // Regardless of if bills are shown or not, we need to update the totals
+    updateUITotals();
+}
 
 
 

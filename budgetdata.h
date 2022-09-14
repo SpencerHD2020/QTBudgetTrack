@@ -18,6 +18,10 @@
 #include <algorithm>
 #include "transaction.h"
 #include "bill.h"
+#include "credcard.h"
+
+// Consider subclassing this class for each table rather than jamming it all here
+
 
 class BudgetData : public QObject
 {
@@ -26,15 +30,20 @@ public:
     BudgetData(QWidget *parent = nullptr);
     void addTransaction(QString description, double ammt, QString date);
     QVector<Transaction> fetchTransactions();
+    QVector<Bill> fetchBills();
+    QVector<CredCard> fetchCCData();
     static bool compareTDate(const Transaction& i, const Transaction& j);
     QStringList fetchTotals();
     QStringList fetchBillNames();
+    QStringList fetchCCNames();
     void addBill(QString billName, double ammt);
     void modifyBill(QString billName, double ammt);
-    QVector<Bill> fetchBills();
+    void addCC(QString cardName, double ammt);
+    void modifyCC(QString cardName, double ammt);
 signals:
     void transactionsUpdated();
     void billsUpdated();
+    void ccUpdated();
     void dbMutationFailed(QString err);
 private:
     QString path = "/Users/spencernowlin/BudgetDB/budget.db";

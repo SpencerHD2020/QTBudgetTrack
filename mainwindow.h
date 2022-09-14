@@ -14,7 +14,10 @@
 
 #include "transaction.h"
 #include "bill.h"
+#include "credcard.h"
 #include "modifybillsdialog.h"
+#include "modifyccdialog.h"
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -42,15 +45,16 @@ private:
         ACCT_TOTAL,
         FIX_TOTAL
     };
-    enum MOD_BILLS_OPERATION {
-        MODIFY_BILL,
-        ADD_BILL
+    enum MOD_BILLS_CC_OPERATION {
+        MODIFY_BCC,
+        ADD_BCC
     };
 
     int activeView {};
     // NOTE: Eventually this should go on the heap
     QVector<Transaction> transactionList;
     QVector<Bill> billList;
+    QVector<CredCard> cardList;
 
 
 private slots:
@@ -66,5 +70,6 @@ public slots:
     void dbError(QString err);
     void updateTransactionsTable();
     void updateBillsTable();
+    void updateCCTable();
 };
 #endif // MAINWINDOW_H
