@@ -214,6 +214,25 @@ void BudgetData::addBill(QString billName, double ammt) {
     }
 }
 
+void BudgetData::modifyBill(QString billName, double ammt) {
+    // Find Record
+    db.open();
+    QSqlQuery q;
+    // Update based on name
+    QString syntax {"UPDATE BILLS set totVal = " + QString::number(ammt) + " where name = '" + billName + "';"};
+    bool billUpdated {q.exec(syntax)};
+    db.close();
+    if (billUpdated) {
+        emit billsUpdated();
+    }
+    else {
+        if (DEBUG) {
+            qDebug() << "[BudgetData::modifyBill]: Failed to update bill (" << billName << ") to ammount (" << ammt << ")";
+        }
+        emit dbMutationFailed("FAILED to update bill value!");
+    }
+}
+
 
 QVector<Transaction> BudgetData::fetchTransactions() {
     // NOTE: EVENTUALLY we will have to get only so many results and then paginate this

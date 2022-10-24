@@ -94,6 +94,7 @@ void MainWindow::modifyBillsButtonClicked() {
         // Process Update
         if (modifyBillsDialog->getLastUserOperation() == MODIFY_BCC) {
             // User is changing an existing bill
+            db->modifyBill(modifyBillsDialog->getBillName(), modifyBillsDialog->getAmmt());
         }
         else if (modifyBillsDialog->getLastUserOperation() == ADD_BCC) {
             // User created a new bill
