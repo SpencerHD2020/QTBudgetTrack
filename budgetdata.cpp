@@ -215,10 +215,8 @@ void BudgetData::addBill(QString billName, double ammt) {
 }
 
 void BudgetData::modifyBill(QString billName, double ammt) {
-    // Find Record
     db.open();
     QSqlQuery q;
-    // Update based on name
     QString syntax {"UPDATE BILLS set totVal = " + QString::number(ammt) + " where name = '" + billName + "';"};
     bool billUpdated {q.exec(syntax)};
     db.close();
@@ -230,6 +228,23 @@ void BudgetData::modifyBill(QString billName, double ammt) {
             qDebug() << "[BudgetData::modifyBill]: Failed to update bill (" << billName << ") to ammount (" << ammt << ")";
         }
         emit dbMutationFailed("FAILED to update bill value!");
+    }
+}
+
+void BudgetData::modifyCC(QString cardName, double ammt) {
+    db.open();
+    QSqlQuery q;
+    QString syntax {"UPDATE CC set owed = " + QString::number(ammt) + " where name = '" + cardName + "';"};
+    bool cardUpdated {q.exec(syntax)};
+    db.close();
+    if (cardUpdated) {
+        emit ccUpdated();
+    }
+    else {
+        if (DEBUG) {
+            qDebug() << "[BudgetData::modifyCC]: Failed to update card (" << cardName << ") to ammount (" << ammt << ")";
+        }
+        emit dbMutationFailed("FAILED to update credit card value!");
     }
 }
 

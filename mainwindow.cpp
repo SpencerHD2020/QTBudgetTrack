@@ -68,6 +68,7 @@ void MainWindow::updateCCTotalsButtonClicked() {
         // Process Update
         if (modifyCCDialog->getLastUserOperation() == MODIFY_BCC) {
             // User is changing an existing card debt
+            db->modifyCC(modifyCCDialog->getCCName(), modifyCCDialog->getAmmt());
         }
         else if (modifyCCDialog->getLastUserOperation() == ADD_BCC) {
             // User created a new card
