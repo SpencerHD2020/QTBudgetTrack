@@ -17,6 +17,8 @@
 #include "credcard.h"
 #include "modifybillsdialog.h"
 #include "modifyccdialog.h"
+#include "transactionitempointer.h"
+#include "budgetexception.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -35,6 +37,7 @@ private:
     Ui::MainWindow *ui;
     bool DEBUG {true};
     void transactionInfoAdded(QString description, double ammt, QString date);
+    TransactionItemPointer findTIPFromPointer(QStandardItem *p);
     BudgetData *db = nullptr;
     enum ACTIVE_VIEWS {
         TRANSACTIONS,
@@ -53,6 +56,8 @@ private:
     int activeView {};
     // NOTE: Eventually this should go on the heap
     QVector<Transaction> transactionList;
+    QVector<TransactionItemPointer> transPointers;
+    QStandardItemModel* model = new QStandardItemModel();
     QVector<Bill> billList;
     QVector<CredCard> cardList;
 
@@ -66,6 +71,7 @@ private slots:
     void showCreditDebtButtonClicked();
     void showBillsButtonClicked();
     void updateUITotals();
+    void transModelChanged(QStandardItem *p);
 public slots:
     void dbError(QString err);
     void updateTransactionsTable();

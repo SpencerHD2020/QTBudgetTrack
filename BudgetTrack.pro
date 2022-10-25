@@ -12,24 +12,28 @@ SOURCES += \
     addtransactiondialog.cpp \
     bill.cpp \
     budgetdata.cpp \
+    budgetexception.cpp \
     credcard.cpp \
     dbitem.cpp \
     main.cpp \
     mainwindow.cpp \
     modifybillsdialog.cpp \
     modifyccdialog.cpp \
-    transaction.cpp
+    transaction.cpp \
+    transactionitempointer.cpp
 
 HEADERS += \
     addtransactiondialog.h \
     bill.h \
     budgetdata.h \
+    budgetexception.h \
     credcard.h \
     dbitem.h \
     mainwindow.h \
     modifybillsdialog.h \
     modifyccdialog.h \
-    transaction.h
+    transaction.h \
+    transactionitempointer.h
 
 FORMS += \
     AddTransactionDialog.ui \

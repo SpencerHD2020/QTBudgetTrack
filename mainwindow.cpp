@@ -21,6 +21,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(db, &BudgetData::transactionsUpdated, this, &MainWindow::updateTransactionsTable);
     connect(db, &BudgetData::billsUpdated, this, &MainWindow::updateBillsTable);
     connect(db, &BudgetData::ccUpdated, this, &MainWindow::updateCCTable);
+    // Connect Transaction Model SIGNALS to SLOTS
+    connect(model, &QStandardItemModel::itemChanged, this, &MainWindow::transModelChanged);
     // Populate the Transactions Table on App Start
     activeView = TRANSACTIONS;
     updateTransactionsTable();
@@ -170,12 +172,14 @@ void MainWindow::updateTransactionsTable() {
     // Update Transactions Table on UI if Transactions table is currently shown
     if (activeView == TRANSACTIONS) {
         // Throw away old list
+        transPointers.clear();
         transactionList.clear();
         transactionList = db->fetchTransactions();
         if (transactionList.length() > 0) {
             // (Re)Build Table View
             this->ui->tableView->clearSpans();
-            auto model = new QStandardItemModel();
+            // Clear the model
+            model->clear();
             this->ui->tableView->setModel(model);
 
             // Configure column Titles
@@ -191,6 +195,8 @@ void MainWindow::updateTransactionsTable() {
                 rowData << new QStandardItem(item.getDescription());
                 rowData << new QStandardItem(item.getSAmmt());
                 model->appendRow(rowData);
+                // Add Data + Pointers to transPointers vector
+                transPointers.append(TransactionItemPointer(item.getDescription(), item.getDate(), item.getSAmmt(), rowData[1], rowData[0], rowData[2]));
             }
         }
         else {
@@ -200,6 +206,38 @@ void MainWindow::updateTransactionsTable() {
     }
     // Regardless of if transactions are shown or not, we need to update the totals
     updateUITotals();
+}
+
+
+
+TransactionItemPointer MainWindow::findTIPFromPointer(QStandardItem *p) {
+    bool foundTip {false};
+    for (auto tip: transPointers) {
+        if (tip.checkPointer(p) != "-1") {
+            foundTip = true;
+            return tip;
+        }
+    }
+    if (!foundTip) {
+        BudgetException *b {new BudgetException("[MainWindow::findTIPFromPointer]: Passed pointer did not match any in Transaction Model!")};
+        b->raise();
+    }
+}
+
+
+
+void MainWindow::transModelChanged(QStandardItem *p) {
+    if (DEBUG) {
+        qDebug() << "Transaction Model Changed!";
+    }
+    // Connection Tested and working
+    try {
+        TransactionItemPointer targetTransaction {findTIPFromPointer(p)};
+    }
+    catch (BudgetException &e) {
+        qDebug() << "EXCEPTION OCCURED: " << e.issue();
+    }
+
 }
 
 
